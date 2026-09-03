@@ -1,0 +1,13 @@
+services:
+  server:
+    build:
+      context: ./backend
+      target: development
+    ports:
+      - 8080:8080
+    develop:
+      watch:
+        - action: rebuild
+          path: ./backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
