@@ -13,3 +13,28 @@ services:
       - ./backend/.env
       - path: ./backend/.env.local
         required: false
+
+  client:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - 3000:3000
+    env_file:
+      - ./frontend/.env
+      - path: ./backend/.env.local
+        required: false
+    environment:
+      WATCHPACK_POLLING: "true"
+    depends_on:
+      - server
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: frontend/package.json
