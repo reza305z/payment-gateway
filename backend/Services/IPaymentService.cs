@@ -4,5 +4,6 @@ namespace PaymentApi.Services;
 
 public interface IPaymentService
 {
-    Task<GetTokenResponse> GetTokenAsync(GetTokenRequest request);
+    Task<GetTokenResponse> GetTokenAsync(
+        GetTokenRequest request, CancellationToken cancellationToken);
 }

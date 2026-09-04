@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+
 using PaymentApi.DTOs.Payment;
 using PaymentApi.Services;
 
@@ -14,10 +16,13 @@ public class PaymentController : ControllerBase
     }
 
     [HttpPost("get-token")]
+    [EnableRateLimiting("payment")]
     public async Task<ActionResult<GetTokenResponse>> GetToken(
-        GetTokenRequest request)
+        GetTokenRequest request,
+        CancellationToken cancellationToken)
     {
-        var response = await _paymentService.GetTokenAsync(request);
+        var response = await _paymentService.GetTokenAsync(
+            request, cancellationToken);
         return Ok(response);
     }
 }

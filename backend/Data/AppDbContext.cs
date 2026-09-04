@@ -30,7 +30,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             entity.Property(x => x.PhoneNumber)
                 .IsRequired()
-                .HasMaxLength(20);
+                .HasMaxLength(11);
 
             entity.Property(x => x.Status)
                 .IsRequired();

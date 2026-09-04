@@ -6,13 +6,19 @@ namespace PaymentApi.Services;
 
 public class PaymentService(
     AppDbContext db,
-    IConfiguration configuration) : IPaymentService
+    IConfiguration configuration,
+    IRedirectUrlValidator redirectUrlValidator) : IPaymentService
 {
     private readonly AppDbContext _db = db;
     private readonly IConfiguration _configuration = configuration;
+    private readonly IRedirectUrlValidator _redirectUrlValidator = redirectUrlValidator;
 
-    public async Task<GetTokenResponse> GetTokenAsync(GetTokenRequest request)
+    public async Task<GetTokenResponse> GetTokenAsync(
+        GetTokenRequest request,
+        CancellationToken cancellationToken)
     {
+        _redirectUrlValidator.Validate(request.RedirectUrl);
+
         var token = Guid.NewGuid();
         var transaction = new PaymentTransaction
         {
@@ -27,7 +33,7 @@ public class PaymentService(
         };
 
         _db.PaymentTransactions.Add(transaction);
-        await _db.SaveChangesAsync();
+        await _db.SaveChangesAsync(cancellationToken);
 
         var frontendUrl = _configuration["FrontendUrl"];
         var gatewayUrl = $"{frontendUrl}/gateway/{token}";
