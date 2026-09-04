@@ -9,5 +9,7 @@ services:
       watch:
         - action: rebuild
           path: ./backend
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+    env_file:
+      - ./backend/.env
+      - path: ./backend/.env.local
+        required: false

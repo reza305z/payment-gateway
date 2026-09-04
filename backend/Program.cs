@@ -64,6 +64,12 @@ builder.Services
     .Validate(
         options => options.AllowedRedirectOrigins.Length > 0,
         "At least one allowed redirect origin must be configured.")
+    .Validate(
+        options => options.ExpirationTimeoutSeconds > 0,
+        "Payment expiration timeout must be greater than zero.")
+    .Validate(
+        options => options.ExpirationIntervalSeconds > 0,
+        "Payment expiration interval must be greater than zero.")
     .ValidateOnStart();
 
 var allowedOrigins = builder.Configuration
