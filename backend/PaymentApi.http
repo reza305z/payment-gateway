@@ -1,6 +1,72 @@
-@PaymentApi_HostAddress = http://localhost:5115
 
-GET {{PaymentApi_HostAddress}}/weatherforecast/
-Accept: application/json
 
-###
+# Flow:
+#   1. get-token creates a Pending transaction and returns its token + gateway URL.
+#   2. The gateway page reads the transaction by token (GET /transaction/{token}).
+#   3. update-status finalizes it as Success (simulator "پرداخت موفق") or
+#      Failed (simulator "انصراف") → 204; a later call on the same token → 400.
+#      The gateway page then redirects the customer back to the merchant's
+#      redirectUrl with ?token=<guid> appended — that is how the business site
+#      knows which order the callback is for (so it must not add its own token
+#      parameter to redirectUrl). The final outcome is confirmed via verify.
+#   4. verify is the merchant-side confirmation — it returns the transaction's
+#      current status. appCode is accepted (kept for contract compatibility)
+#      but not validated.
+#
+# With `docker compose up -d` the API listens on http://localhost:8080 (see README).
+# When running `dotnet run` from the IDE instead, the launch profile binds :5115.
+@PaymentApi_HostAddress = http://localhost:8080
+@token = 00000000-0000-0000-0000-000000000000
+@appCode = DEMO
+
+### 1. Create a payment transaction — returns { isSuccess, gatewayUrl, token }
+POST {{PaymentApi_HostAddress}}/api/payment/get-token
+Content-Type: application/json
+
+{
+  "terminalNo": "123",
+  "amount": 125000,
+  "redirectUrl": "http://shop.localhost:3080/payment/result",
+  "reservationNumber": "ORD-1",
+  "phoneNumber": "09120000000"
+}
+
+### 2. Read the transaction (gateway page load — token only, no appCode)
+GET {{PaymentApi_HostAddress}}/api/payment/transaction/{{token}}
+
+### 3. Finalize as paid (the simulator's "پرداخت موفق" — rrn must be 12 digits)
+POST {{PaymentApi_HostAddress}}/api/payment/update-status
+Content-Type: application/json
+
+{
+  "token": "{{token}}",
+  "isSuccess": true,
+  "rrn": "912345678901"
+}
+
+### 4. Finalize as cancelled (the simulator's "انصراف")
+POST {{PaymentApi_HostAddress}}/api/payment/update-status
+Content-Type: application/json
+
+{
+  "token": "{{token}}",
+  "isSuccess": false
+}
+
+### 5. Verify a transaction from the merchant side
+POST {{PaymentApi_HostAddress}}/api/payment/verify
+Content-Type: application/json
+
+{
+  "token": "{{token}}",
+  "appCode": "{{appCode}}"
+}
+
+### Errors (RFC 7807 ProblemDetails):
+#   - get-token:  400 when the redirect URL is not on the allow-list or the phone
+#                  number does not match ^09\d{9}$; 429 past the 3/min rate limit.
+#   - transaction read: 404 unknown token.
+#   - update-status: 404 unknown token; 400 already finalized
+#                  (Success/Failed/Expired — any outcome) or invalid payload.
+#   - verify:     404 unknown token; 400 missing/invalid token or missing appCode
+#                  (appCode is required by the contract but not validated).

@@ -1,11 +1,11 @@
-FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 ARG TARGETARCH
 COPY . /source
 WORKDIR /source
 RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages \
     dotnet publish -a ${TARGETARCH/amd64/x64} --use-current-runtime --self-contained false -o /app
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS development
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS development
 WORKDIR /source
 COPY *.csproj ./
 RUN dotnet restore
@@ -13,7 +13,7 @@ COPY . ./
 RUN dotnet build --no-restore
 CMD ["dotnet", "run", "--no-launch-profile", "--no-restore"]
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS final
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine AS final
 WORKDIR /app
 COPY --from=build /app .
 ARG UID=10001
