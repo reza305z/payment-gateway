@@ -25,4 +25,14 @@ public class PaymentController : ControllerBase
             request, cancellationToken);
         return Ok(response);
     }
+
+    [HttpPost("verify")]
+    public async Task<ActionResult<VerifyResponse>> Verify(
+        VerifyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var response = await _paymentService.VerifyAsync(
+            request, cancellationToken);
+        return Ok(response);
+    }
 }

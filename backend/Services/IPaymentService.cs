@@ -6,4 +6,7 @@ public interface IPaymentService
 {
     Task<GetTokenResponse> GetTokenAsync(
         GetTokenRequest request, CancellationToken cancellationToken);
+
+    Task<VerifyResponse> VerifyAsync(
+        VerifyRequest request, CancellationToken cancellationToken);
 }
