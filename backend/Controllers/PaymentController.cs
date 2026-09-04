@@ -45,4 +45,14 @@ public class PaymentController : ControllerBase
             request, cancellationToken);
         return NoContent();
     }
+
+    [HttpGet("transaction/{token}")]
+    public async Task<ActionResult<TransactionResponse>> GetTransaction(
+        Guid token,
+        CancellationToken cancellationToken)
+    {
+        var response = await _paymentService.GetTransactionAsync(
+            token, cancellationToken);
+        return Ok(response);
+    }
 }

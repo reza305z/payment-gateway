@@ -121,4 +121,37 @@ public class PaymentService(
                 "Payment transaction has already been finalized.");
         }
     }
+
+    public async Task<TransactionResponse> GetTransactionAsync(
+        Guid token,
+        CancellationToken cancellationToken)
+    {
+        var transaction = await _db.PaymentTransactions
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                x => x.Token == token,
+                cancellationToken);
+
+        if (transaction is null)
+        {
+            throw new PaymentTransactionNotFoundException(
+                "Payment transaction was not found.");
+        }
+
+        return new TransactionResponse
+        {
+            Token = transaction.Token,
+            Amount = transaction.Amount,
+            Status = transaction.Status.ToString(),
+            ReservationNumber = transaction.ReservationNumber,
+            RedirectUrl = BuildReturnUrl(transaction.RedirectUrl, transaction.Token),
+            Rrn = transaction.Rrn
+        };
+    }
+
+    private static string BuildReturnUrl(string redirectUrl, Guid token)
+    {
+        var separator = redirectUrl.Contains('?') ? "&" : "?";
+        return $"{redirectUrl}{separator}token={token}";
+    }
 }

@@ -12,4 +12,7 @@ public interface IPaymentService
 
     Task UpdateStatusAsync(
         UpdateStatusRequest request, CancellationToken cancellationToken);
+
+    Task<TransactionResponse> GetTransactionAsync(
+        Guid token, CancellationToken cancellationToken);
 }
