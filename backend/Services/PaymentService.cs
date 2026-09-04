@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
+using PaymentApi.Configuration;
 using PaymentApi.Data;
 using PaymentApi.DTOs.Payment;
 using PaymentApi.Exceptions;
@@ -72,5 +74,51 @@ public class PaymentService(
             ReservationNumber = transaction.ReservationNumber,
             Rrn = transaction.Rrn
         };
+    }
+
+    public async Task UpdateStatusAsync(
+        UpdateStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        if (request.Token == Guid.Empty)
+        {
+            throw new InvalidPaymentRequestException(
+                "Token is invalid.");
+        }
+
+        var transactionExists = await _db.PaymentTransactions
+            .AsNoTracking()
+            .AnyAsync(x => x.Token == request.Token, cancellationToken);
+
+        if (!transactionExists)
+        {
+            throw new PaymentTransactionNotFoundException(
+                "Payment transaction was not found.");
+        }
+
+        var newStatus = request.IsSuccess
+            ? PaymentStatus.Success
+            : PaymentStatus.Failed;
+
+        var updatedRows = await _db.PaymentTransactions
+            .Where(x =>
+                x.Token == request.Token &&
+                x.Status == PaymentStatus.Pending)
+            .ExecuteUpdateAsync(setters =>
+                setters
+                    .SetProperty(x => x.Status, newStatus)
+                    .SetProperty(
+                        x => x.Rrn,
+                        request.IsSuccess ? request.Rrn : null)
+                    .SetProperty(
+                        x => x.UpdatedAt,
+                        DateTime.UtcNow),
+                cancellationToken);
+
+        if (updatedRows == 0)
+        {
+            throw new InvalidPaymentRequestException(
+                "Payment transaction has already been finalized.");
+        }
     }
 }

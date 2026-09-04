@@ -35,4 +35,14 @@ public class PaymentController : ControllerBase
             request, cancellationToken);
         return Ok(response);
     }
+
+    [HttpPost("update-status")]
+    public async Task<IActionResult> UpdateStatus(
+        UpdateStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        await _paymentService.UpdateStatusAsync(
+            request, cancellationToken);
+        return NoContent();
+    }
 }

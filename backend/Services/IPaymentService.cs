@@ -9,4 +9,7 @@ public interface IPaymentService
 
     Task<VerifyResponse> VerifyAsync(
         VerifyRequest request, CancellationToken cancellationToken);
+
+    Task UpdateStatusAsync(
+        UpdateStatusRequest request, CancellationToken cancellationToken);
 }
